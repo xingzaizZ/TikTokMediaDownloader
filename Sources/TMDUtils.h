@@ -17,6 +17,14 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)handleTap:(UIButton *)sender;
 @end
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void TMDAddButtonAction(UIButton *btn, void (^action)(UIButton *));
+
+#ifdef __cplusplus
+}
+#endif
 
 NS_ASSUME_NONNULL_END
