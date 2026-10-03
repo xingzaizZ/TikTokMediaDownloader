@@ -1,4 +1,4 @@
-ARCHS = arm64 arm64e
+ARCHS = arm64
 TARGET = iphone:clang::14.0
 INSTALL_TARGET_PROCESSES = TikTok
 
