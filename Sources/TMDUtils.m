@@ -1,4 +1,5 @@
 #import "TMDUtils.h"
+#import <objc/runtime.h>
 
 @implementation TMDUtils
 
@@ -87,3 +88,21 @@
 }
 
 @end
+
+@implementation TMDButtonHandler
++ (instancetype)shared {
+    static TMDButtonHandler *instance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{ instance = [[TMDButtonHandler alloc] init]; });
+    return instance;
+}
+- (void)handleTap:(UIButton *)sender {
+    void (^action)(UIButton *) = objc_getAssociatedObject(sender, "tmd_btn_action");
+    if (action) action(sender);
+}
+@end
+
+void TMDAddButtonAction(UIButton *btn, void (^action)(UIButton *)) {
+    objc_setAssociatedObject(btn, "tmd_btn_action", action, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    [btn addTarget:[TMDButtonHandler shared] action:@selector(handleTap:) forControlEvents:UIControlEventTouchUpInside];
+}

@@ -2,13 +2,35 @@
 #import "TMDMediaManager.h"
 #import "TMDUtils.h"
 
+#pragma mark - 背景关闭辅助类
+
+@interface TMDOverlayDismisser : NSObject
++ (instancetype)shared;
+- (void)dismiss:(UIButton *)sender;
+@end
+
+@implementation TMDOverlayDismisser
++ (instancetype)shared {
+    static TMDOverlayDismisser *instance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{ instance = [[TMDOverlayDismisser alloc] init]; });
+    return instance;
+}
+- (void)dismiss:(UIButton *)sender {
+    [sender.superview removeFromSuperview];
+}
+@end
+
 #pragma mark - 下载选项弹窗
+
+static NSObject *tmd_lock = nil;
 
 void TMDShowDownloadSheet(AWEAwemeModel *aweme) {
     if (!aweme) {
         [TMDUtils showToast:@"无法获取作品信息"];
         return;
     }
+    if (!tmd_lock) tmd_lock = [[NSObject alloc] init];
 
     UIWindow *window = [TMDUtils keyWindow];
     if (!window) return;
@@ -27,7 +49,6 @@ void TMDShowDownloadSheet(AWEAwemeModel *aweme) {
     sheet.clipsToBounds = YES;
     [overlay addSubview:sheet];
 
-    NSMutableArray *buttons = [NSMutableArray array];
     CGFloat yOffset = 16;
 
     // 标题
@@ -47,7 +68,7 @@ void TMDShowDownloadSheet(AWEAwemeModel *aweme) {
     if (videoOptions.count > 0 && !isAlbum) {
         for (NSDictionary *opt in videoOptions) {
             UIButton *btn = [TMDUtils createButtonWithTitle:opt[@"label"] frame:CGRectMake(16, yOffset, sheetWidth - 32, 44)];
-            [btn addAction:^(UIButton *sender) {
+            TMDAddButtonAction(btn, ^(UIButton *sender) {
                 [overlay removeFromSuperview];
                 [TMDUtils showToast:@"开始下载视频..."];
                 [TMDMediaManager downloadVideoFromURL:opt[@"url"]
@@ -62,9 +83,8 @@ void TMDShowDownloadSheet(AWEAwemeModel *aweme) {
                         [TMDUtils showToast:@"下载失败"];
                     }
                 }];
-            } forControlEvents:UIControlEventTouchUpInside];
+            });
             [sheet addSubview:btn];
-            [buttons addObject:btn];
             yOffset += 52;
         }
     }
@@ -75,7 +95,7 @@ void TMDShowDownloadSheet(AWEAwemeModel *aweme) {
         if (imageURLs.count > 0) {
             UIButton *btn = [TMDUtils createButtonWithTitle:[NSString stringWithFormat:@"保存全部图片 (%lu张)", (unsigned long)imageURLs.count]
                                                         frame:CGRectMake(16, yOffset, sheetWidth - 32, 44)];
-            [btn addAction:^(UIButton *sender) {
+            TMDAddButtonAction(btn, ^(UIButton *sender) {
                 [overlay removeFromSuperview];
                 [TMDUtils showToast:[NSString stringWithFormat:@"开始下载 %lu 张图片...", (unsigned long)imageURLs.count]];
                 __block NSInteger successCount = 0;
@@ -84,7 +104,7 @@ void TMDShowDownloadSheet(AWEAwemeModel *aweme) {
                     [TMDMediaManager downloadMediaFromURL:url mediaType:TMDMediaTypeImage progress:nil completion:^(BOOL s, NSURL *f) {
                         if (s && f) {
                             [TMDMediaManager saveImageToAlbum:f completion:^(BOOL saved) {
-                                @synchronized(self) {
+                                @synchronized(tmd_lock) {
                                     if (saved) successCount++;
                                     if (successCount + (total - successCount) >= total) {
                                         [TMDUtils showToast:[NSString stringWithFormat:@"已保存 %ld/%ld 张图片", (long)successCount, (long)total]];
@@ -94,9 +114,8 @@ void TMDShowDownloadSheet(AWEAwemeModel *aweme) {
                         }
                     }];
                 }
-            } forControlEvents:UIControlEventTouchUpInside];
+            });
             [sheet addSubview:btn];
-            [buttons addObject:btn];
             yOffset += 52;
         }
 
@@ -104,7 +123,7 @@ void TMDShowDownloadSheet(AWEAwemeModel *aweme) {
         NSString *currentURL = [TMDMediaManager currentImageURLFromAweme:aweme];
         if (currentURL) {
             UIButton *btn = [TMDUtils createButtonWithTitle:@"保存当前图片" frame:CGRectMake(16, yOffset, sheetWidth - 32, 44)];
-            [btn addAction:^(UIButton *sender) {
+            TMDAddButtonAction(btn, ^(UIButton *sender) {
                 [overlay removeFromSuperview];
                 [TMDUtils showToast:@"开始下载图片..."];
                 [TMDMediaManager downloadMediaFromURL:currentURL mediaType:TMDMediaTypeImage progress:nil completion:^(BOOL s, NSURL *f) {
@@ -116,9 +135,8 @@ void TMDShowDownloadSheet(AWEAwemeModel *aweme) {
                         [TMDUtils showToast:@"下载失败"];
                     }
                 }];
-            } forControlEvents:UIControlEventTouchUpInside];
+            });
             [sheet addSubview:btn];
-            [buttons addObject:btn];
             yOffset += 52;
         }
     }
@@ -126,12 +144,11 @@ void TMDShowDownloadSheet(AWEAwemeModel *aweme) {
     // 实况照片
     if (isLivePhoto) {
         UIButton *btn = [TMDUtils createButtonWithTitle:@"保存实况照片" frame:CGRectMake(16, yOffset, sheetWidth - 32, 44)];
-        [btn addAction:^(UIButton *sender) {
+        TMDAddButtonAction(btn, ^(UIButton *sender) {
             [overlay removeFromSuperview];
             [TMDUtils showToast:@"实况照片保存功能开发中"];
-        } forControlEvents:UIControlEventTouchUpInside];
+        });
         [sheet addSubview:btn];
-        [buttons addObject:btn];
         yOffset += 52;
     }
 
@@ -139,7 +156,7 @@ void TMDShowDownloadSheet(AWEAwemeModel *aweme) {
     NSString *audioURL = [TMDMediaManager audioURLFromAweme:aweme];
     if (audioURL && !isAlbum) {
         UIButton *btn = [TMDUtils createButtonWithTitle:@"保存音频 (MP3)" frame:CGRectMake(16, yOffset, sheetWidth - 32, 44)];
-        [btn addAction:^(UIButton *sender) {
+        TMDAddButtonAction(btn, ^(UIButton *sender) {
             [overlay removeFromSuperview];
             [TMDUtils showToast:@"开始下载音频..."];
             [TMDMediaManager downloadMediaFromURL:audioURL mediaType:TMDMediaTypeAudio progress:nil completion:^(BOOL s, NSURL *f) {
@@ -151,9 +168,8 @@ void TMDShowDownloadSheet(AWEAwemeModel *aweme) {
                     [TMDUtils showToast:@"下载失败"];
                 }
             }];
-        } forControlEvents:UIControlEventTouchUpInside];
+        });
         [sheet addSubview:btn];
-        [buttons addObject:btn];
         yOffset += 52;
     }
 
@@ -162,9 +178,9 @@ void TMDShowDownloadSheet(AWEAwemeModel *aweme) {
     UIButton *cancelBtn = [TMDUtils createButtonWithTitle:@"取消" frame:CGRectMake(16, yOffset, sheetWidth - 32, 44)];
     cancelBtn.backgroundColor = [UIColor colorWithRed:0.95 green:0.95 blue:0.95 alpha:1.0];
     [cancelBtn setTitleColor:[UIColor darkGrayColor] forState:UIControlStateNormal];
-    [cancelBtn addAction:^(UIButton *sender) {
+    TMDAddButtonAction(cancelBtn, ^(UIButton *sender) {
         [overlay removeFromSuperview];
-    } forControlEvents:UIControlEventTouchUpInside];
+    });
     [sheet addSubview:cancelBtn];
     yOffset += 52;
 
@@ -172,30 +188,13 @@ void TMDShowDownloadSheet(AWEAwemeModel *aweme) {
     sheet.frame = CGRectMake(0, 0, sheetWidth, yOffset + 16);
     sheet.center = CGPointMake(window.bounds.size.width / 2, window.bounds.size.height / 2);
 
-    // 点击背景关闭（用透明按钮覆盖）
+    // 点击背景关闭
     UIButton *bgButton = [UIButton buttonWithType:UIButtonTypeCustom];
     bgButton.frame = overlay.bounds;
     bgButton.backgroundColor = [UIColor clearColor];
     [bgButton addTarget:[TMDOverlayDismisser shared] action:@selector(dismiss:) forControlEvents:UIControlEventTouchUpInside];
     [overlay insertSubview:bgButton atIndex:0];
 }
-
-@interface TMDOverlayDismisser : NSObject
-+ (instancetype)shared;
-- (void)dismiss:(UIButton *)sender;
-@end
-
-@implementation TMDOverlayDismisser
-+ (instancetype)shared {
-    static TMDOverlayDismisser *instance = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{ instance = [[TMDOverlayDismisser alloc] init]; });
-    return instance;
-}
-- (void)dismiss:(UIButton *)sender {
-    [sender.superview removeFromSuperview];
-}
-@end
 
 #pragma mark - 通用长按面板注入逻辑
 

@@ -11,4 +11,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
+// 按钮 block 点击辅助
+@interface TMDButtonHandler : NSObject
++ (instancetype)shared;
+- (void)handleTap:(UIButton *)sender;
+@end
+
+void TMDAddButtonAction(UIButton *btn, void (^action)(UIButton *));
+
 NS_ASSUME_NONNULL_END

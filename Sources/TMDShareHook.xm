@@ -25,13 +25,11 @@ static void TMDInjectDownloadButtonToSharePanel(UIViewController *self) {
                                                              frame:CGRectMake(0, 0, 80, 30)];
         downloadBtn.titleLabel.font = [UIFont systemFontOfSize:13];
 
-        if (@available(iOS 14.0, *)) {
-            [downloadBtn addAction:[UIAction actionWithHandler:^(UIAction *action) {
-                [self dismissViewControllerAnimated:YES completion:^{
-                    TMDShowDownloadSheet(aweme);
-                }];
-            }] forControlEvents:UIControlEventTouchUpInside];
-        }
+        TMDAddButtonAction(downloadBtn, ^(UIButton *sender) {
+            [self dismissViewControllerAnimated:YES completion:^{
+                TMDShowDownloadSheet(aweme);
+            }];
+        });
 
         // 尝试添加到导航栏
         if ([self.navigationItem respondsToSelector:@selector(setRightBarButtonItem:)]) {
