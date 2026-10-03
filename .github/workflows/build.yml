@@ -31,6 +31,9 @@ jobs:
         cp -r /tmp/ios-sdks/iPhoneOS*.sdk $THEOS/sdks/
         ls $THEOS/sdks
 
+    - name: Install ldid
+      run: brew install ldid || true
+
     - name: Build (rootful)
       if: matrix.variant == 'rootful'
       run: |
