@@ -1,0 +1,9 @@
+Package: com.yourname.tiktokmediadownloader
+Name: TikTokMediaDownloader
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Description: 无损下载 TikTok 视频和图片
+Maintainer: You
+Author: You
+Section: Tweaks
+Depends: mobilesubstrate, preferenceloader
