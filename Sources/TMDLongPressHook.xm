@@ -240,9 +240,6 @@ __attribute__((constructor))
 static void TMDConstructor() {
     dispatch_async(dispatch_get_main_queue(), ^{
         [TMDUtils showToast:@"TikTokMediaDownloader 已注入成功"];
-        BOOL hasBD = NSClassFromString(@"BDImageView") != nil;
-        BOOL hasTTT = NSClassFromString(@"TTTAttributedLabel") != nil;
-        [TMDUtils showToast:[NSString stringWithFormat:@"BDImageView:%d TTTLabel:%d", hasBD, hasTTT]];
     });
 }
 
@@ -281,36 +278,17 @@ static AWEAwemeModel *TMDCurrentAweme() {
     return nil;
 }
 
-static void TMDTryShowDownload() {
-    AWEAwemeModel *aweme = TMDCurrentAweme();
-    if (aweme) {
-        TMDShowDownloadSheet(aweme);
-    } else {
-        [TMDUtils showToast:@"未获取到视频信息"];
-    }
-}
-
-#pragma mark - Hook BDImageView 和 TTTAttributedLabel 长按
+#pragma mark - Hook BDImageView 长按
 
 %hook BDImageView
 - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
     %orig;
-    [TMDUtils showToast:@"BDImageView 长按触发"];
     if (sender.state == UIGestureRecognizerStateEnded) {
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            TMDTryShowDownload();
-        });
-    }
-}
-%end
-
-%hook TTTAttributedLabel
-- (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
-    %orig;
-    [TMDUtils showToast:@"TTTLabel 长按触发"];
-    if (sender.state == UIGestureRecognizerStateEnded) {
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            TMDTryShowDownload();
+            AWEAwemeModel *aweme = TMDCurrentAweme();
+            if (aweme) {
+                TMDShowDownloadSheet(aweme);
+            }
         });
     }
 }
