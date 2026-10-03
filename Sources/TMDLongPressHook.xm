@@ -243,46 +243,55 @@ static void TMDConstructor() {
     });
 }
 
-#pragma mark - Hook 多个可能的长按面板类名（TikTok 45.7.0 兼容）
+#pragma mark - 辅助：查找当前显示的 viewController
 
-%hook AWEModernLongPressPanelTableViewController
-- (NSArray *)dataArray {
-    NSArray *original = %orig;
-    return TMDInjectDownloadToLongPressPanel(self, original);
+static UIViewController *TMDTopViewController() {
+    UIViewController *vc = [TMDUtils keyWindow].rootViewController;
+    while (vc.presentedViewController) {
+        vc = vc.presentedViewController;
+    }
+    return vc;
 }
-%end
 
-%hook AWELongPressPanelTableViewController
-- (NSArray *)dataArray {
-    NSArray *original = %orig;
-    return TMDInjectDownloadToLongPressPanel(self, original);
+static AWEAwemeModel *TMDCurrentAweme() {
+    UIViewController *top = TMDTopViewController();
+    UIViewController *check = top;
+    NSInteger depth = 0;
+    while (check && depth < 10) {
+        if ([check respondsToSelector:NSSelectorFromString(@"currentAweme")]) {
+            id aweme = [check valueForKey:@"currentAweme"];
+            if (aweme) return aweme;
+        }
+        if ([check respondsToSelector:NSSelectorFromString(@"currentAwemeModel")]) {
+            id aweme = [check valueForKey:@"currentAwemeModel"];
+            if (aweme) return aweme;
+        }
+        for (UIViewController *child in check.childViewControllers) {
+            if ([child respondsToSelector:NSSelectorFromString(@"currentAweme")]) {
+                id aweme = [child valueForKey:@"currentAweme"];
+                if (aweme) return aweme;
+            }
+        }
+        check = check.parentViewController;
+        depth++;
+    }
+    return nil;
 }
-%end
 
-%hook AWEModernLongPressPanelViewController
-- (NSArray *)dataArray {
-    NSArray *original = %orig;
-    return TMDInjectDownloadToLongPressPanel(self, original);
-}
-%end
+#pragma mark - Hook BDImageView 长按（参考 NA9TikTok 方式）
 
-%hook AWELongPressPanelViewController
-- (NSArray *)dataArray {
-    NSArray *original = %orig;
-    return TMDInjectDownloadToLongPressPanel(self, original);
-}
-%end
-
-%hook AWELongPressPanelCollectionViewController
-- (NSArray *)dataArray {
-    NSArray *original = %orig;
-    return TMDInjectDownloadToLongPressPanel(self, original);
-}
-%end
-
-%hook AWEModernLongPressPanelCollectionViewController
-- (NSArray *)dataArray {
-    NSArray *original = %orig;
-    return TMDInjectDownloadToLongPressPanel(self, original);
+%hook BDImageView
+- (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
+    %orig;
+    if (sender.state == UIGestureRecognizerStateEnded) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            AWEAwemeModel *aweme = TMDCurrentAweme();
+            if (aweme) {
+                TMDShowDownloadSheet(aweme);
+            } else {
+                [TMDUtils showToast:@"未获取到视频信息"];
+            }
+        });
+    }
 }
 %end
