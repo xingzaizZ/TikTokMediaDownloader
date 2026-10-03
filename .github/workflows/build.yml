@@ -28,7 +28,7 @@ jobs:
       run: |
         git clone --depth 1 https://github.com/theos/sdks.git /tmp/ios-sdks
         mkdir -p $THEOS/sdks
-        cp -r /tmp/ios-sdks/iPhoneOS15.5.sdk $THEOS/sdks/ 2>/dev/null || cp -r /tmp/ios-sdks/iPhoneOS*.sdk $THEOS/sdks/
+        cp -r /tmp/ios-sdks/iPhoneOS*.sdk $THEOS/sdks/
         ls $THEOS/sdks
 
     - name: Build (rootful)
