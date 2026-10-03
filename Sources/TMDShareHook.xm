@@ -7,7 +7,8 @@ extern void TMDShowDownloadSheet(AWEAwemeModel *aweme);
 
 #pragma mark - 通用分享面板注入逻辑
 
-static void TMDInjectDownloadButtonToSharePanel(UIViewController *self) {
+static void TMDInjectDownloadButtonToSharePanel(id self) {
+    UIViewController *vc = (UIViewController *)self;
     // 尝试获取当前作品
     __block AWEAwemeModel *aweme = nil;
     if ([self respondsToSelector:@selector(awemeModel)]) {
@@ -26,20 +27,20 @@ static void TMDInjectDownloadButtonToSharePanel(UIViewController *self) {
         downloadBtn.titleLabel.font = [UIFont systemFontOfSize:13];
 
         TMDAddButtonAction(downloadBtn, ^(UIButton *sender) {
-            [self dismissViewControllerAnimated:YES completion:^{
+            [vc dismissViewControllerAnimated:YES completion:^{
                 TMDShowDownloadSheet(aweme);
             }];
         });
 
         // 尝试添加到导航栏
-        if ([self.navigationItem respondsToSelector:@selector(setRightBarButtonItem:)]) {
+        if ([vc.navigationItem respondsToSelector:@selector(setRightBarButtonItem:)]) {
             UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithCustomView:downloadBtn];
-            self.navigationItem.rightBarButtonItem = item;
+            vc.navigationItem.rightBarButtonItem = item;
         } else {
             // 备选：添加到 view 上
-            downloadBtn.frame = CGRectMake(self.view.bounds.size.width - 100, 20, 80, 30);
+            downloadBtn.frame = CGRectMake(vc.view.bounds.size.width - 100, 20, 80, 30);
             downloadBtn.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin;
-            [self.view addSubview:downloadBtn];
+            [vc.view addSubview:downloadBtn];
         }
     });
 }
