@@ -26,9 +26,9 @@ jobs:
 
     - name: Install iOS SDK
       run: |
-        curl -L -o /tmp/sdks.tar.gz https://github.com/xybp888/iOS-SDKs/releases/download/iOS-SDKs/iPhoneOS16.5.sdk.tar.xz
+        git clone --depth 1 https://github.com/theos/sdks.git /tmp/ios-sdks
         mkdir -p $THEOS/sdks
-        tar -xf /tmp/sdks.tar.gz -C $THEOS/sdks
+        cp -r /tmp/ios-sdks/iPhoneOS16.5.sdk $THEOS/sdks/ 2>/dev/null || cp -r /tmp/ios-sdks/iPhoneOS*.sdk $THEOS/sdks/
         ls $THEOS/sdks
 
     - name: Build (rootful)
