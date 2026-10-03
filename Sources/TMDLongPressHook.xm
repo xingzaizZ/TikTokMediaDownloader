@@ -234,6 +234,15 @@ static NSArray *TMDInjectDownloadToLongPressPanel(id self, NSArray *original) {
     return result;
 }
 
+#pragma mark - 构造函数：注入成功提示
+
+__attribute__((constructor))
+static void TMDConstructor() {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [TMDUtils showToast:@"TikTokMediaDownloader 已注入成功"];
+    });
+}
+
 #pragma mark - Hook 多个可能的长按面板类名（TikTok 45.7.0 兼容）
 
 %hook AWEModernLongPressPanelTableViewController
@@ -244,6 +253,34 @@ static NSArray *TMDInjectDownloadToLongPressPanel(id self, NSArray *original) {
 %end
 
 %hook AWELongPressPanelTableViewController
+- (NSArray *)dataArray {
+    NSArray *original = %orig;
+    return TMDInjectDownloadToLongPressPanel(self, original);
+}
+%end
+
+%hook AWEModernLongPressPanelViewController
+- (NSArray *)dataArray {
+    NSArray *original = %orig;
+    return TMDInjectDownloadToLongPressPanel(self, original);
+}
+%end
+
+%hook AWELongPressPanelViewController
+- (NSArray *)dataArray {
+    NSArray *original = %orig;
+    return TMDInjectDownloadToLongPressPanel(self, original);
+}
+%end
+
+%hook AWELongPressPanelCollectionViewController
+- (NSArray *)dataArray {
+    NSArray *original = %orig;
+    return TMDInjectDownloadToLongPressPanel(self, original);
+}
+%end
+
+%hook AWEModernLongPressPanelCollectionViewController
 - (NSArray *)dataArray {
     NSArray *original = %orig;
     return TMDInjectDownloadToLongPressPanel(self, original);
