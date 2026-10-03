@@ -283,13 +283,14 @@ static AWEAwemeModel *TMDCurrentAweme() {
 %hook BDImageView
 - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
     %orig;
-    if (sender.state == UIGestureRecognizerStateEnded) {
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            AWEAwemeModel *aweme = TMDCurrentAweme();
-            if (aweme) {
-                TMDShowDownloadSheet(aweme);
-            }
-        });
-    }
+    [TMDUtils showToast:@"长按触发"];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        AWEAwemeModel *aweme = TMDCurrentAweme();
+        if (aweme) {
+            TMDShowDownloadSheet(aweme);
+        } else {
+            [TMDUtils showToast:@"未获取到视频"];
+        }
+    });
 }
 %end
