@@ -238,12 +238,14 @@ static NSArray *TMDInjectDownloadToLongPressPanel(id self, NSArray *original) {
 
 %hook AWEModernLongPressPanelTableViewController
 - (NSArray *)dataArray {
-    return TMDInjectDownloadToLongPressPanel(self, %orig);
+    NSArray *original = %orig;
+    return TMDInjectDownloadToLongPressPanel(self, original);
 }
 %end
 
 %hook AWELongPressPanelTableViewController
 - (NSArray *)dataArray {
-    return TMDInjectDownloadToLongPressPanel(self, %orig);
+    NSArray *original = %orig;
+    return TMDInjectDownloadToLongPressPanel(self, original);
 }
 %end
